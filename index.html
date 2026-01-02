@@ -1,0 +1,1438 @@
+﻿<!-- START OF FILE ai_studio_code_optimized_v3.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000000'/%3E%3Cpath fill='%23ffffff' d='M7 5h14v5h4v9h-4v8h-6v-8h-4v8H7V5zm4 4v5h10V9H11z'/%3E%3C/svg%3E">
+    <title>P-TOOL Pixel Opti Ultimate</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* 浅色模式 */
+            --bg-color: #e0e0e0;
+            --panel-bg: #f4f4f4;
+            --text-main: #000000;
+            --text-dim: #666666;
+            --border: #000000;
+            --btn-bg: #ffffff;
+            --btn-hover: #000000;
+            --btn-hover-text: #ffffff;
+            --input-bg: #ffffff;
+            --active-bg: #000000;
+            --active-text: #ffffff;
+            --highlight: #cccccc;
+            --accent-red: #ff3333;
+            --accent-green: #00ff00;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff00ff;
+            --selection-bg: #ffffaa;
+        }
+
+        [data-theme="dark"] {
+            /* 深色模式 */
+            --bg-color: #2a2a2a;
+            --panel-bg: #1a1a1a;
+            --text-main: #ffffff;
+            --text-dim: #999999;
+            --border: #ffffff;
+            --btn-bg: #000000;
+            --btn-hover: #ffffff;
+            --btn-hover-text: #000000;
+            --input-bg: #333333;
+            --active-bg: #ffffff;
+            --active-text: #000000;
+            --highlight: #444444;
+            --accent-red: #ff5555;
+            --accent-green: #00ff00;
+            --accent-cyan: #00cccc;
+            --accent-magenta: #ff55ff;
+            --selection-bg: #555533;
+        }
+
+        * { box-sizing: border-box; font-family: 'VT323', monospace; }
+
+        body {
+            margin: 0; background-color: var(--bg-color); color: var(--text-main);
+            font-size: 18px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; user-select: none;
+        }
+        
+        .icon { width: 16px; height: 16px; fill: currentColor; vertical-align: middle; pointer-events: none; }
+        button .icon { width: 18px; height: 18px; }
+        .red-icon { color: var(--accent-red); }
+
+        /* --- UI 组件 --- */
+        button {
+            background: var(--btn-bg); color: var(--text-main); border: 2px solid var(--border);
+            padding: 2px 6px; cursor: pointer; font-size: 18px; text-transform: uppercase;
+            box-shadow: 2px 2px 0px var(--border); margin: 2px; border-radius: 0;
+            display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+            line-height: 1; height: 30px; white-space: nowrap;
+        }
+        button:hover:not(:disabled) { background: var(--btn-hover); color: var(--btn-hover-text); transform: translate(1px, 1px); box-shadow: 1px 1px 0px var(--border); }
+        button:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; border-style: dotted; box-shadow: none; }
+        
+        button.active-mode { background: var(--active-bg); color: var(--active-text); box-shadow: inset 2px 2px 0px var(--bg-color); font-weight: bold; }
+        
+        @keyframes slowPulse { 0% { opacity: 1; } 50% { opacity: 0.5; background: var(--accent-cyan); color:#000; } 100% { opacity: 1; } }
+        .pulse-active { animation: slowPulse 1.5s infinite; font-weight: bold; }
+
+        input[type="number"], select, input[type="text"] {
+            background: var(--input-bg); border: 2px solid var(--border); color: var(--text-main);
+            padding: 2px 4px; font-size: 18px; outline: none; border-radius: 0; height: 28px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; height: 10px; background: var(--bg-color); 
+            border: 2px solid var(--border); margin: 6px 0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px; 
+            background: var(--text-main); border: 2px solid var(--bg-color); cursor: pointer;
+        }
+
+        .pixel-check { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-size: 18px; }
+        .pixel-check input { display: none; }
+        .pixel-check .box {
+            width: 18px; height: 18px; border: 2px solid var(--border); background: var(--input-bg);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .pixel-check input:checked + .box::after { content: ''; width: 10px; height: 10px; background: var(--text-main); }
+
+        /* --- 布局 --- */
+        .top-bar {
+            height: 48px; background: var(--panel-bg); border-bottom: 4px solid var(--border);
+            display: flex; align-items: center; padding: 0 10px; gap: 8px; z-index: 200; flex-shrink: 0;
+        }
+        .app-logo { font-size: 22px; font-weight: 900; background: var(--text-main); color: var(--panel-bg); padding: 2px 8px; border: 4px double var(--panel-bg); outline: 2px solid var(--text-main); margin-right: 5px; }
+        .top-group { display: flex; align-items: center; gap: 4px; padding: 0 8px; border-right: 2px solid var(--text-dim); height: 28px; }
+        .top-group:last-child { border-right: none; }
+
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none; position: absolute; right: 0; top: 100%; margin-top: 4px;
+            background-color: var(--panel-bg); border: 2px solid var(--border);
+            min-width: 120px; box-shadow: 4px 4px 0px rgba(0,0,0,0.5); z-index: 300; padding: 5px;
+        }
+        .dropdown:hover .dropdown-content { display: flex; flex-direction: column; gap: 4px; }
+        .dropdown-btn { padding: 0 4px; min-width: 24px; }
+
+        .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
+        
+        .sidebar {
+            width: 280px; background: var(--panel-bg); display: flex; flex-direction: column;
+            padding: 8px; gap: 8px; z-index: 100; flex-shrink: 0;
+        }
+        .sidebar.left { border-right: 4px solid var(--border); }
+        .sidebar.right { width: 300px; border-left: 4px solid var(--border); }
+
+        .control-group {
+            border: 2px solid var(--border); padding: 10px 6px 6px 6px; background: var(--bg-color);
+            box-shadow: 4px 4px 0px var(--border); display: flex; flex-direction: column; gap: 6px; position: relative; margin-top: 8px; flex-shrink: 0;
+        }
+        .group-header {
+            font-size: 16px; font-weight: bold; color: var(--panel-bg); background: var(--text-main);
+            padding: 0 6px; position: absolute; top: -12px; left: 6px; border: 2px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; min-width: 80px; height: 24px;
+        }
+        [data-theme="dark"] .group-header { z-index: 10; }
+
+        .row { display: flex; gap: 4px; align-items: center; }
+        .color-list { display: flex; flex-wrap: wrap; gap: 3px; max-height: 250px; overflow-y: auto; padding: 4px; background: var(--input-bg); border: 2px solid var(--border); min-height: 50px; }
+        .color-item { width: 24px; height: 24px; border: 1px solid var(--text-dim); cursor: pointer; flex-shrink: 0; }
+        .color-item:hover { transform: scale(1.1); border-color: var(--text-main); z-index: 10; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        
+        /* 优化后的高亮样式：静态、持续、无缩放 */
+        .color-item.highlight-locate, .palette-block.highlight-locate, .palette-row.highlight-locate {
+            border: 2px solid var(--accent-magenta);
+            background: rgba(255,0,255,0.2);
+            z-index: 20;
+        }
+
+        /* 结果色板区域 */
+        .palette-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; gap: 8px;}
+        
+        /* 结果色板 - 网格视图 */
+        .palette-grid {
+            min-height: 60px; max-height: 150px; overflow-y: auto; 
+            background: var(--input-bg); border: 2px solid var(--border);
+            display: flex; flex-wrap: wrap; gap: 1px; padding: 2px; align-content: flex-start;
+        }
+        .palette-block { width: 16px; height: 16px; border: 1px solid rgba(0,0,0,0.2); cursor: pointer; }
+        .palette-block:hover { transform: scale(1.3); z-index: 10; border-color: #fff; box-shadow: 1px 1px 2px #000; }
+        .palette-block.active { border: 2px solid var(--accent-magenta); z-index: 5; }
+
+        /* 结果色板 - 列表视图 */
+        .palette-table { flex: 1; overflow-y: auto; background: var(--input-bg); border: 2px solid var(--border); }
+        .palette-row {
+            display: flex; align-items: center; gap: 8px; padding: 4px; border-bottom: 1px dotted var(--text-dim);
+            background: var(--bg-color); cursor: pointer; min-height: 32px;
+        }
+        .palette-row:hover { background: var(--highlight); }
+        .palette-row.active { background: var(--selection-bg); border: 2px dashed var(--text-main); }
+        
+        .palette-swatch { width: 28px; height: 28px; border: 2px solid var(--border); flex-shrink: 0; }
+        .palette-remark { 
+            flex: 1; font-size: 16px; color: var(--text-main); overflow: hidden; 
+            white-space: normal; word-break: break-all; line-height: 1.1; max-height: 34px;
+        }
+        
+        /* 视口 */
+        .viewport { flex: 1; position: relative; overflow: hidden; background: #888; cursor: default; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+        .bg-checkered {
+            background-image: linear-gradient(45deg, #bbb 25%, transparent 25%), linear-gradient(-45deg, #bbb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #bbb 75%), linear-gradient(-45deg, transparent 75%, #bbb 75%);
+            background-size: 20px 20px; background-color: #ddd;
+        }
+        #canvasWrapper { position: absolute; transform-origin: 0 0; image-rendering: pixelated; }
+        #uiOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        
+        .hint-bar { position: absolute; bottom: 10px; left: 10px; pointer-events: none; z-index: 20; }
+        .hint-tag { background: var(--text-main); color: var(--bg-color); padding: 4px 10px; border: 2px solid var(--border); font-size: 20px; font-weight: bold; }
+        .hint-tag.alert { background: var(--accent-red); color: #fff; border-color: #000; }
+
+        /* 模态框 */
+        .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:150; }
+        .modal-overlay.active { display: flex; justify-content: center; align-items: center; }
+        
+        /* 通用弹窗样式 */
+        .modal-box { background: var(--panel-bg); border: 4px solid var(--border); box-shadow: 10px 10px 0px #000; padding: 15px; display: flex; flex-direction: column; gap: 10px; min-width: 320px; }
+        
+        /* 颜色替换器 (非模态，可拖拽) */
+        #colorEditor { 
+            display: none; position: fixed; top: 100px; left: 300px; z-index: 200; 
+            width: 340px; 
+        }
+        #colorEditor.active { display: flex; }
+        .drag-handle { cursor: move; background: var(--text-dim); color: #fff; padding: 4px; margin: -15px -15px 10px -15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding-left: 10px; }
+
+        .replace-list {
+            max-height: 120px; overflow-y: auto; border: 2px solid var(--border); background: var(--input-bg);
+            padding: 4px; font-size: 14px; display: flex; flex-direction: column; gap: 2px;
+        }
+        .replace-item { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--text-dim); }
+
+        .proj-item { display: flex; justify-content: space-between; align-items: center; padding: 6px; border-bottom: 2px solid var(--border); cursor: pointer; }
+        .proj-item:hover { background: var(--bg-color); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); border-left: 2px solid var(--border); }
+        ::-webkit-scrollbar-thumb { background: var(--text-dim); border: 2px solid var(--border); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-main); }
+        .copy-feedback { animation: flashInvert 0.2s steps(2, end); }
+        @keyframes flashInvert { 0% { filter: invert(1); } 100% { filter: invert(0); } }
+
+    </style>
+</head>
+<body data-theme="light">
+
+<!-- SVG 定义 -->
+<svg style="display:none;">
+    <symbol id="icon-new" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></symbol>
+    <symbol id="icon-save" viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></symbol>
+    <symbol id="icon-folder" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24"><path d="M6.99 11L3 11l0 2 3.99 0zm10.02 0l3.99 0 0 2-3.99 0zM12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 2c1.65 0 3 1.35 3 3s-1.35 3-3 3-3-1.35-3-3 1.35-3 3-3zm1-9l-2 0 0 3.99 2 0zm0 14.01l-2 0 0 3.99 2 0zm-5.63-9.44l-1.42-1.42-2.82 2.83 1.42 1.42zm11.3 11.3l-1.42-1.42-2.82 2.83 1.42 1.42zm-11.3 0l2.82-2.83-1.42-1.42-2.82 2.83zm11.3-11.3l2.82 2.83-1.42 1.42-2.82-2.83z"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M9 2c-1.05 0-2.05.16-3 .46 2.81 1.09 4.8 3.79 4.8 6.94 0 4.14-3.36 7.5-7.5 7.5-1.06 0-2.07-.22-3-.62C1.43 19.46 4.43 22 8 22c5.52 0 10-4.48 10-10S13.52 2 9 2z"/></symbol>
+    <symbol id="icon-export" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></symbol>
+    <symbol id="icon-undo" viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></symbol>
+    <symbol id="icon-redo" viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 9 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></symbol>
+    <symbol id="icon-flip-h" viewBox="0 0 24 24"><path d="M15 21h2v-2h-2v2zm4-12h2V7h-2v2zM3 5v14c0 1.1.9 2 2 2h4v-2H5V5h4V3H5c-1.1 0-2 .9-2 2zm16-2v2h2c0-1.1-.9-2-2-2zm-8 20h2V1h-2v22zm8-6h2v-2h-2v2zM15 5h2V3h-2v2zm4 8h2v-2h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2z"/></symbol>
+    <symbol id="icon-flip-v" viewBox="0 0 24 24"><path d="M15 21h2v-2h-2v2zm4-12h2V7h-2v2zM3 5v14c0 1.1.9 2 2 2h4v-2H5V5h4V3H5c-1.1 0-2 .9-2 2zm16-2v2h2c0-1.1-.9-2-2-2zm-8 20h2V1h-2v22zm8-6h2v-2h-2v2zM15 5h2V3h-2v2zm4 8h2v-2h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2z" transform="rotate(90 12 12)"/></symbol>
+    <symbol id="icon-picker" viewBox="0 0 24 24"><path d="M20.71 5.63l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-3.12 3.12-1.93-1.91-1.41 1.41 1.42 1.42L3 16.25V21h4.75l8.92-8.92 1.42 1.42 1.41-1.41-1.92-1.92 3.12-3.12c.4-.4.4-1.03.01-1.42zM6.92 19L5 17.08l8.06-8.06 1.92 1.92L6.92 19z"/></symbol>
+    <symbol id="icon-paint" viewBox="0 0 24 24"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/></symbol>
+    <symbol id="icon-imp" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" transform="rotate(180 12 12)"/></symbol>
+    <symbol id="icon-txt" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></symbol>
+    <symbol id="icon-img" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></symbol>
+    <symbol id="icon-paste" viewBox="0 0 24 24"><path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/></symbol>
+    <symbol id="icon-xlsx" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z M10 15l2-2 2 2v-1l-2-2 2-2v-1l-2 2-2-2v1l2 2-2 2z"/></symbol>
+    <symbol id="icon-down" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+</svg>
+
+<!-- 顶部栏 -->
+<div class="top-bar">
+    <div class="app-logo">P-TOOL</div>
+    <!-- 1. 文件操作 -->
+    <div class="top-group">
+        <button onclick="checkSaveThenAction('new')" title="新建项目"><svg class="icon"><use xlink:href="#icon-new"></use></svg></button>
+        <button onclick="saveProject()" title="保存项目"><svg class="icon"><use xlink:href="#icon-save"></use></svg></button>
+        <button onclick="openProjectList()" title="打开项目"><svg class="icon"><use xlink:href="#icon-folder"></use></svg></button>
+        <div style="display:flex; flex-direction:column; justify-content:center; line-height:1.2; margin-left:5px;">
+            <span id="currentProjectName" style="font-size:16px; font-weight:bold;">无项目</span>
+            <span id="projStateInd" style="font-size:12px; color:var(--accent-red); display:none;">(未保存)</span>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+    </div>
+
+    <!-- 2. 参考线 & 翻转 (网格功能已移除) -->
+    <div class="top-group">
+        <label class="pixel-check" title="锁定参考线" style="margin-right:5px;">
+            <input type="checkbox" id="lockGuides" onchange="draw(false)">
+            <span class="box"></span> 锁
+        </label>
+        <span style="font-size:16px; color:var(--text-dim);">步进:</span>
+        <input type="number" id="stepInput" step="0.1" value="20.3" oninput="manualStep(this.value)" style="width:70px;">
+        <button onclick="flipImg('h')" title="水平翻转"><svg class="icon"><use xlink:href="#icon-flip-h"></use></svg></button>
+        <button onclick="flipImg('v')" title="垂直翻转"><svg class="icon"><use xlink:href="#icon-flip-v"></use></svg></button>
+    </div>
+
+    <!-- 3. 手绘工具 (新位置) -->
+    <div class="top-group" id="manualPaintToolbar" style="border-right:2px solid var(--text-dim);">
+        <button id="paintModeBtn" onclick="togglePaintMode()" title="开启手绘模式"><svg class="icon"><use xlink:href="#icon-paint"></use></svg> 绘图</button>
+        <div class="row" style="margin-left:4px;">
+            <input type="color" id="manualPaintColor" style="width:30px; height:28px; padding:0;" value="#ff0000" oninput="syncManualFromPicker(this.value)">
+            <input type="text" id="manualPaintHex" value="#FF0000" maxlength="7" oninput="syncManualFromHex(this.value)" style="width:70px; text-transform:uppercase;">
+        </div>
+        <button onclick="pasteToInput('manualPaintHex', syncManualFromHex)" title="粘贴色值"><svg class="icon"><use xlink:href="#icon-paste"></use></svg></button>
+        <button id="manualPickBtn" onclick="toggleManualPicker()" title="吸取颜色"><svg class="icon"><use xlink:href="#icon-picker"></use></svg></button>
+        <button onclick="clearManualPaint()" title="清空手绘层"><svg class="icon red-icon"><use xlink:href="#icon-trash"></use></svg></button>
+    </div>
+
+    <!-- 4. 信息统计 (Spacer) -->
+    <div class="top-group" style="flex:1; justify-content:flex-end; border-right:none;">
+        <span class="stat-display" style="color:var(--text-dim); font-size:16px;">
+            <span id="statGridSize">-</span> | Px:<span id="statPixelCount">-</span> | Colors:<span id="statColorCount" style="font-weight:bold; color:var(--text-main);">-</span>
+        </span>
+    </div>
+
+    <!-- 5. 撤销/导出/主题 -->
+    <div class="top-group">
+        <button id="btnUndo" onclick="undo()" disabled title="撤销 (Ctrl+Z)"><svg class="icon"><use xlink:href="#icon-undo"></use></svg></button>
+        <button id="btnRedo" onclick="redo()" disabled title="重做 (Ctrl+Y)"><svg class="icon"><use xlink:href="#icon-redo"></use></svg></button>
+    </div>
+    <div class="top-group">
+        <button class="primary" onclick="exportImage()" title="导出结果图片" style="border-width:2px; font-weight:bold;"><svg class="icon"><use xlink:href="#icon-export"></use></svg> 导出</button>
+        <div class="dropdown">
+            <button class="dropdown-btn"><svg class="icon"><use xlink:href="#icon-down"></use></svg></button>
+            <div class="dropdown-content">
+                <button onclick="toggleExportMode()" id="btnExpMode" style="width:100%">彩色</button>
+                <button onclick="toggleExportScale()" id="btnExpScale" style="width:100%">缩放:1x</button>
+            </div>
+        </div>
+    </div>
+    <div class="top-group" style="border-right:none;">
+        <button onclick="toggleTheme()" title="切换主题" id="themeBtn"><svg class="icon"><use xlink:href="#icon-sun"></use></svg></button>
+    </div>
+</div>
+
+<div class="main-container">
+    
+    <!-- 左侧工具栏 -->
+    <div class="sidebar left">
+        <!-- 算法 -->
+        <div class="control-group">
+            <div class="group-header">算法参数</div>
+            <select id="algoType" onchange="markDirty();draw()" style="width:100%;">
+                <option value="euclidean">欧氏距离 (标准)</option>
+                <option value="redmean" selected>Redmean (推荐)</option>
+                <option value="perceptual">感知加权 (人眼)</option>
+            </select>
+            <div style="margin-top:4px;">
+                <div class="row" style="justify-content:space-between; font-size:16px; color:var(--text-dim);"><span>色彩容差</span><span id="tolVal">30</span></div>
+                <input type="range" id="tolerance" min="0" max="150" value="30" oninput="updateParam('tolerance', this.value)">
+            </div>
+            <div>
+                <div class="row" style="justify-content:space-between; font-size:16px; color:var(--text-dim);"><span>主色吸附</span><span id="kcTolVal">10</span></div>
+                <input type="range" id="keyColorTol" min="0" max="80" value="10" oninput="updateKeyColorParam(this.value)">
+            </div>
+        </div>
+
+        <!-- 主色 -->
+        <div class="control-group" style="flex:1;">
+            <div class="group-header">
+                <span>锁定主色</span>
+                <button onclick="clearKeyColors()" style="border:none;background:transparent;padding:0;" title="清空"><svg class="icon red-icon"><use xlink:href="#icon-trash"></use></svg></button>
+            </div>
+            <input type="file" id="keyImportInput" accept=".txt,.png" style="display:none" onchange="handlePaletteImport(this, 'key')">
+            <div class="row" style="margin-top:4px; align-items:center;">
+                <button id="pickBtn" onclick="togglePicker()" style="flex:1"><svg class="icon"><use xlink:href="#icon-picker"></use></svg> <span id="pickBtnText">取色</span></button>
+                <label class="pixel-check" title="取预览图颜色" style="font-size:14px;">
+                    <input type="checkbox" id="keyPickSrc"> <span class="box"></span> 取预览
+                </label>
+            </div>
+            <div class="row">
+                <label class="pixel-check" title="强力吸附" style="margin-left:2px;">
+                    <input type="checkbox" id="globalKeyForce" onchange="markDirty();draw()">
+                    <span class="box"></span> 强吸
+                </label>
+            </div>
+            <div class="color-list" id="keyColorList" style="flex:1;"></div>
+            <div class="row" style="margin-top:auto;">
+                 <button onclick="document.getElementById('keyImportInput').click()" style="flex:1;"><svg class="icon"><use xlink:href="#icon-imp"></use></svg></button>
+                 <button onclick="exportPalette('key','txt')" style="flex:1;"><svg class="icon"><use xlink:href="#icon-txt"></use></svg></button>
+                 <button onclick="exportPalette('key','png')" style="flex:1;"><svg class="icon"><use xlink:href="#icon-img"></use></svg></button>
+            </div>
+        </div>
+        
+        <!-- 临时 -->
+        <div class="control-group" style="flex:1;">
+            <div class="group-header">
+                <span>临时色板</span>
+                <button onclick="clearTempColors()" style="border:none;background:transparent;padding:0;" title="清空"><svg class="icon red-icon"><use xlink:href="#icon-trash"></use></svg></button>
+            </div>
+            <input type="file" id="tempImportInput" accept=".txt,.png" style="display:none" onchange="handlePaletteImport(this, 'temp')">
+            <div class="row" style="margin-top:4px; align-items:center;">
+                <button id="tempPickBtn" onclick="toggleTempPicker()" style="flex:1"><svg class="icon"><use xlink:href="#icon-picker"></use></svg> <span id="tempPickBtnText">取色</span></button>
+                 <label class="pixel-check" title="取预览图颜色" style="font-size:14px;">
+                    <input type="checkbox" id="tempPickSrc" checked> <span class="box"></span> 取预览
+                </label>
+            </div>
+            <div class="color-list" id="tempPaletteList" style="flex:1;"></div>
+            <div class="row" style="margin-top:auto;">
+                 <button onclick="document.getElementById('tempImportInput').click()" style="flex:1;"><svg class="icon"><use xlink:href="#icon-imp"></use></svg></button>
+                 <button onclick="exportPalette('temp','txt')" style="flex:1;"><svg class="icon"><use xlink:href="#icon-txt"></use></svg></button>
+                 <button onclick="exportPalette('temp','png')" style="flex:1;"><svg class="icon"><use xlink:href="#icon-img"></use></svg></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 中间视口 -->
+    <div class="viewport bg-checkered" id="viewport">
+        <div id="canvasWrapper"><canvas id="mainCanvas"></canvas></div>
+        <canvas id="uiOverlay"></canvas>
+        <div class="hint-bar">
+            <span class="hint-tag" id="previewHint">按住 [空格] 预览</span>
+        </div>
+    </div>
+
+    <!-- 右侧结果色板 -->
+    <div class="sidebar right">
+        <div class="group-header" style="position:static; width:100%; margin-bottom:5px;">
+            <span>结果色板</span>
+            <button onclick="toggleSortMode()" id="btnSortMode" style="font-size:16px; height:20px; padding:0 4px; border:none; background:transparent; color:var(--panel-bg);">排序:数量</button>
+        </div>
+        
+        <div class="row" style="flex-shrink:0;">
+            <button onclick="exportPalette('result','xlsx')" style="flex:1;" title="导出 Excel"><svg class="icon"><use xlink:href="#icon-xlsx"></use></svg> XLSX</button>
+            <button onclick="exportPalette('result','txt')" style="flex:1;" title="导出 TXT"><svg class="icon"><use xlink:href="#icon-txt"></use></svg></button>
+            <button onclick="exportPalette('result','png')" style="flex:1;" title="导出 PNG"><svg class="icon"><use xlink:href="#icon-img"></use></svg></button>
+        </div>
+
+        <div class="palette-container">
+            <!-- 新增：网格视图 -->
+            <div class="palette-grid" id="paletteGrid">
+                <!-- 由JS填充 -->
+            </div>
+            <!-- 原有：列表视图 -->
+            <div class="palette-table" id="currentPaletteList">
+                <div style="text-align:center; padding:20px; color:var(--text-dim);">等待计算...</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 替换编辑器 (可拖拽，非遮罩) -->
+<div class="modal-box" id="colorEditor" onclick="event.stopPropagation()">
+    <div class="drag-handle" id="colorEditorHandle">
+        <span>替换颜色</span>
+        <button onclick="cancelReplace()" style="border:none;background:transparent;color:#fff;cursor:pointer;">×</button>
+    </div>
+    
+    <!-- 信息显示区域 (详细列表) -->
+    <div style="font-size:14px; color:var(--text-dim);">待替换颜色:</div>
+    <div class="replace-list" id="replaceListContainer">
+        <!-- 由JS生成 -->
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+        <input type="color" id="replaceColorPicker" oninput="syncHex(this.value)" style="width:40px;height:32px;">
+        <input type="text" id="replaceColorHex" placeholder="#RRGGBB" maxlength="7" oninput="syncColor(this.value)" style="flex:1; text-transform:uppercase;">
+        <button onclick="pasteToInput('replaceColorHex', syncColor)"><svg class="icon"><use xlink:href="#icon-paste"></use></svg></button>
+        <button id="replacePickBtn" onclick="toggleReplacePicker()"><svg class="icon"><use xlink:href="#icon-picker"></use></svg></button>
+    </div>
+    <div class="row" style="justify-content:space-between; margin-top:5px; font-size:16px;">
+        <label class="pixel-check"><input type="radio" name="hlMode" value="solid" checked onchange="updateHighlightMode()"><span class="box"></span> 绿(实色)</label>
+        <label class="pixel-check"><input type="radio" name="hlMode" value="blink" onchange="updateHighlightMode()"><span class="box"></span> 闪烁</label>
+    </div>
+    <div style="font-size:14px; color:var(--text-dim); margin-top:5px;">* 点击色板列表/网格可多选</div>
+    <div class="row" style="margin-top:10px;">
+        <button onclick="cancelReplace()" style="flex:1">取消</button>
+        <button onclick="confirmReplace()" style="flex:1; background:var(--text-main); color:var(--bg-color);">确认替换</button>
+    </div>
+</div>
+
+<!-- 备注输入弹窗 -->
+<div class="modal-overlay" id="remarkModal">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div style="font-weight:bold;">编辑备注</div>
+        <div class="row"><div style="width:20px; height:20px; border:1px solid #000;" id="remarkColorPreview"></div> <span id="remarkHexLabel">#FFFFFF</span></div>
+        <textarea id="remarkInput" placeholder="输入备注信息..." style="width:100%; height:80px; resize:none; font-family:'VT323'; background:var(--input-bg); color:var(--text-main); border:2px solid var(--border); outline:none;"></textarea>
+        <div class="row" style="justify-content:flex-end;">
+            <button onclick="closeRemarkModal()">取消</button>
+            <button onclick="saveRemark()" style="background:var(--text-main); color:var(--bg-color);">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 项目列表弹窗 -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeProjectList()">
+    <div class="modal-box" onclick="event.stopPropagation()" style="width:500px; max-height:80vh;">
+        <div class="row" style="justify-content:space-between; border-bottom:2px solid var(--border); padding-bottom:5px;">
+            <span style="font-weight:bold;">本地项目</span>
+            <button onclick="closeProjectList()" style="border:none; background:transparent;">×</button>
+        </div>
+        <div id="projectListContainer" style="flex:1; overflow-y:auto; min-height:200px; border: 2px solid var(--border); background: var(--input-bg);"></div>
+    </div>
+</div>
+
+<script>
+    // --- IndexedDB & State ---
+    const DB_NAME='PixelOptiDB', STORE_NAME='projects', DB_VERSION=3;
+    const db={db:null,init(){return new Promise((r,j)=>{const q=indexedDB.open(DB_NAME,DB_VERSION);q.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(STORE_NAME))d.createObjectStore(STORE_NAME,{keyPath:'id'})};q.onsuccess=e=>{this.db=e.target.result;r()};q.onerror=j})},saveProject(d){return new Promise((r,j)=>{const t=this.db.transaction([STORE_NAME],'readwrite');t.oncomplete=()=>r();t.onerror=e=>j(e.target.error);t.objectStore(STORE_NAME).put(d)})},getAllProjects(){return new Promise((r,j)=>{const t=this.db.transaction([STORE_NAME],'readonly');const q=t.objectStore(STORE_NAME).getAll();q.onsuccess=()=>r(q.result);q.onerror=j})},deleteProject(id){return new Promise((r,j)=>{const t=this.db.transaction([STORE_NAME],'readwrite');t.oncomplete=()=>r();t.onerror=e=>j(e.target.error);t.objectStore(STORE_NAME).delete(id)})}};
+    db.init().catch(e=>console.error("DB",e));
+
+    let state = {
+        projectId: null, projectName: null, isDirty: false, loaded: false,
+        img: null, imgSource: null, sourceData: null,
+        zoom: 1, panX: 0, panY: 0, guides: { v: [0,20], h: [0,20] }, 
+        pickerMode: false, tempPickerMode: false, replacePickerMode: false,
+        manualPaintMode: false, manualPickMode: false,
+        manualGridColors: new Map(), // Paint Layer
+        keyColors: [], tempColors: [], replacements: new Map(), paletteRemarks: new Map(),
+        generatedPalette: [], colorCounts: new Map(), lastSortedPalette: [],
+        lastCalcStep: 0, lastCalcGrid: null, gridCacheCanvas: null,
+        keyColorTolerance: 10, tolerance: 30,
+        previewing: false, previewLocked: false, lastSpaceTime: 0,
+        dragging: null, mouse: { x: 0, y: 0 }, flipH: 1, flipV: 1,
+        replaceMultiHexes: new Set(), currentRemarkHex: null,
+        highlightMode: 'solid'
+    };
+    
+    // 全局禁用右键菜单（为了绘图模式的右键擦除和色板的右键复制）
+    window.addEventListener('contextmenu', e => e.preventDefault());
+
+    let exportSettings = { mode: 'normal', scale: 1 };
+    let sortSettings = { mode: 'count' };
+    const historyStack = [], redoStack = [];
+    const canvas = document.getElementById('mainCanvas'), ctx = canvas.getContext('2d', {willReadFrequently:true});
+    const uiCanvas = document.getElementById('uiOverlay'), uiCtx = uiCanvas.getContext('2d');
+    const wrapper = document.getElementById('canvasWrapper'), vp = document.getElementById('viewport');
+
+    // --- UI Logic ---
+    function toggleTheme() {
+        const b = document.body;
+        const curr = b.getAttribute('data-theme');
+        const next = curr === 'light' ? 'dark' : 'light';
+        b.setAttribute('data-theme', next);
+        document.getElementById('themeBtn').innerHTML = `<svg class="icon"><use xlink:href="#icon-${next==='light'?'sun':'moon'}"></use></svg>`;
+        draw(true);
+    }
+
+    function toggleExportMode() { exportSettings.mode = exportSettings.mode==='normal'?'grayscale':'normal'; document.getElementById('btnExpMode').innerText = exportSettings.mode==='normal'?'彩色':'灰度'; }
+    function toggleExportScale() { exportSettings.scale = exportSettings.scale>=8?1:exportSettings.scale*2; document.getElementById('btnExpScale').innerText = `缩放:${exportSettings.scale}x`; }
+    function toggleSortMode() { sortSettings.mode = sortSettings.mode==='count'?'hue':'count'; document.getElementById('btnSortMode').innerText = `排序:${sortSettings.mode==='count'?'数量':'色相'}`; updatePaletteUI(); }
+    
+    function markDirty() { state.isDirty = true; state.lastCalcGrid = null; updateTitle(); }
+    function updateTitle() { 
+        document.getElementById('currentProjectName').innerText = state.projectName || "未命名"; 
+        document.getElementById('projStateInd').style.display = state.isDirty ? 'inline' : 'none'; 
+    }
+    
+    // --- Draggable Modal Logic ---
+    function makeDraggable(el, handle) {
+        let isDragging = false, startX, startY, initialLeft, initialTop;
+        handle.onmousedown = e => {
+            e.preventDefault(); isDragging = true;
+            startX = e.clientX; startY = e.clientY;
+            const r = el.getBoundingClientRect();
+            initialLeft = r.left; initialTop = r.top;
+            document.onmousemove = drag; document.onmouseup = stopDrag;
+        };
+        function drag(e) {
+            if(!isDragging) return;
+            const dx = e.clientX - startX, dy = e.clientY - startY;
+            el.style.left = `${initialLeft + dx}px`; el.style.top = `${initialTop + dy}px`;
+        }
+        function stopDrag() { isDragging = false; document.onmousemove = null; document.onmouseup = null; }
+    }
+    makeDraggable(document.getElementById('colorEditor'), document.getElementById('colorEditorHandle'));
+
+    // --- History ---
+    function pushHistory() {
+        if(!state.loaded) return;
+        historyStack.push({ manual: new Map(state.manualGridColors), repl: new Map(state.replacements) });
+        redoStack.length = 0; updateUndoRedoUI();
+    }
+    function undo() { if(!historyStack.length)return; redoStack.push({manual:new Map(state.manualGridColors),repl:new Map(state.replacements)}); restoreState(historyStack.pop()); }
+    function redo() { if(!redoStack.length)return; historyStack.push({manual:new Map(state.manualGridColors),repl:new Map(state.replacements)}); restoreState(redoStack.pop()); }
+    function restoreState(s) { state.manualGridColors=new Map(s.manual); state.replacements=new Map(s.repl); markDirty(); draw(true); updateUndoRedoUI(); }
+    function updateUndoRedoUI() { document.getElementById('btnUndo').disabled = !historyStack.length; document.getElementById('btnRedo').disabled = !redoStack.length; }
+    window.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey) && e.key==='z') {e.preventDefault();undo();} if((e.ctrlKey||e.metaKey) && e.key==='y') {e.preventDefault();redo();} });
+
+    // --- Project ---
+    async function checkSaveThenAction(act, loadId) {
+        if(state.isDirty && state.loaded && confirm("项目未保存，是否保存？")) await saveProject();
+        if(act==='new') { resetProject(); document.getElementById('fileInput').click(); }
+        else if(act==='load') loadProjectData(loadId);
+    }
+    function resetProject() {
+        state = { ...state, projectId:null, projectName:null, isDirty:false, loaded:false, img:null, manualGridColors:new Map(), keyColors:[], tempColors:[], replacements:new Map(), paletteRemarks:new Map(), guides:{v:[10,30],h:[10,30]}, flipH:1, flipV:1 };
+        historyStack.length=0; redoStack.length=0; ctx.clearRect(0,0,canvas.width,canvas.height); uiCtx.clearRect(0,0,uiCanvas.width,uiCanvas.height);
+        document.getElementById('fileInput').value=''; document.getElementById('keyColorList').innerHTML=''; document.getElementById('tempPaletteList').innerHTML='';
+        updatePaletteUI(); updateBtnStates(); updateUndoRedoUI(); updateTitle();
+        document.getElementById('colorEditor').style.display='none';
+    }
+    async function saveProject() {
+        if(!state.loaded) return alert("空项目");
+        const name = prompt("项目名称:", state.projectName || `Proj_${new Date().toLocaleTimeString()}`);
+        if(!name) return;
+        const d = { id: state.projectId||`p_${Date.now()}`, name, updated:Date.now(), imgSource:state.imgSource, params:{ zoom:state.zoom, panX:state.panX, panY:state.panY, guides:state.guides, tolerance:state.tolerance, keyColorTolerance:state.keyColorTolerance, step:document.getElementById('stepInput').value }, data:{ manual:Array.from(state.manualGridColors), key:state.keyColors, temp:state.tempColors, repl:Array.from(state.replacements), remark:Array.from(state.paletteRemarks) } };
+        await db.saveProject(d); state.projectId=d.id; state.projectName=name; state.isDirty=false; updateTitle(); alert("保存成功");
+    }
+    async function openProjectList() {
+        const l = await db.getAllProjects(); l.sort((a,b)=>b.updated-a.updated);
+        const c = document.getElementById('projectListContainer'); c.innerHTML='';
+        if(!l.length) c.innerHTML='<div style="padding:10px;text-align:center;color:#666">无记录</div>';
+        l.forEach(p=>{
+            const d=document.createElement('div'); d.className='proj-item';
+            d.innerHTML=`<div onclick="checkSaveThenAction('load','${p.id}')" style="flex:1"><b>${p.name}</b><br><small>${new Date(p.updated).toLocaleString()}</small></div><button onclick="deleteProject('${p.id}',event)" style="color:var(--accent-red);border:none;background:transparent;">删除</button>`;
+            c.appendChild(d);
+        });
+        document.getElementById('modalOverlay').classList.add('active');
+    }
+    function closeProjectList() { document.getElementById('modalOverlay').classList.remove('active'); }
+    async function deleteProject(id,e) { e.stopPropagation(); if(confirm("删除此项目?")) { await db.deleteProject(id); openProjectList(); } }
+    function loadProjectData(id) {
+        closeProjectList();
+        db.getAllProjects().then(ps=>{
+            const p=ps.find(x=>x.id===id); if(!p)return;
+            resetProject();
+            const i=new Image();
+            i.onload=()=>{
+                initImage(i,p.imgSource);
+                state.projectId=p.id; state.projectName=p.name;
+                state.zoom=p.params.zoom; state.panX=p.params.panX; state.panY=p.params.panY; 
+                state.guides=p.params.guides || {v:[10,30], h:[10,30]};
+                state.tolerance=p.params.tolerance; state.keyColorTolerance=p.params.keyColorTolerance;
+                document.getElementById('stepInput').value=p.params.step;
+                document.getElementById('tolerance').value=state.tolerance; document.getElementById('tolVal').innerText=state.tolerance;
+                document.getElementById('keyColorTol').value=state.keyColorTolerance; document.getElementById('kcTolVal').innerText=state.keyColorTolerance;
+                state.manualGridColors=new Map(p.data.manual); state.keyColors=p.data.key; state.tempColors=p.data.temp;
+                state.replacements=new Map(p.data.repl); state.paletteRemarks=new Map(p.data.remark);
+                renderTempPalette(); renderKeyPalette();
+                updateTitle(); updateBtnStates(); draw(true);
+            }; i.src=p.imgSource;
+        });
+    }
+
+    // --- File & Image ---
+    function handleFileSelect(inp) { if(inp.files[0]) loadFile(inp.files[0]); inp.value=''; }
+    document.body.ondragover=e=>{e.preventDefault();document.body.classList.add('drag-over')}; document.body.ondragleave=e=>{e.preventDefault();document.body.classList.remove('drag-over')}; document.body.ondrop=e=>{e.preventDefault();document.body.classList.remove('drag-over');if(e.dataTransfer.files[0])checkSaveThenAction(null).then(()=>loadFile(e.dataTransfer.files[0]))};
+    function loadFile(f) { const r=new FileReader(); r.onload=e=>{const i=new Image();i.onload=()=>{resetProject();initImage(i,e.target.result);};i.src=e.target.result}; r.readAsDataURL(f); }
+    function initImage(img,src) { 
+        state.img=img; state.loaded=true; state.imgSource=src; 
+        const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const x=c.getContext('2d');x.drawImage(img,0,0);state.sourceData=x.getImageData(0,0,img.width,img.height).data;state.lastCalcGrid=null; 
+        const cx=img.width/2, cy=img.height/2, step=parseFloat(document.getElementById('stepInput').value)||20;
+        state.guides.v=[cx-step/2, cx+step/2]; state.guides.h=[cy-step/2, cy+step/2];
+        resetView(); markDirty(); draw(true);
+    }
+    
+    function resetView() {
+        if(!state.img) return;
+        const vw = vp.clientWidth, vh = vp.clientHeight;
+        const pad = 0.8; 
+        const scale = Math.min((vw * pad) / state.img.width, (vh * pad) / state.img.height);
+        state.zoom = scale || 1;
+        state.panX = (vw - state.img.width * state.zoom) / 2;
+        state.panY = (vh - state.img.height * state.zoom) / 2;
+        updateView();
+    }
+
+    // --- Drawing & Calculation ---
+    function draw(force=false) {
+        if(!state.loaded) return;
+        canvas.width=state.img.width; canvas.height=state.img.height;
+        ctx.imageSmoothingEnabled=false; ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        const sz=getStep(), w=state.img.width, h=state.img.height;
+        const isPreview = state.previewing || state.previewLocked || state.replaceMultiHexes.size>0 || state.highlightMode === 'blink-once';
+        
+        if(!state.previewing && !state.previewLocked && !state.manualPaintMode) updateStats(Math.ceil(w/sz), Math.ceil(h/sz), null);
+
+        if(isPreview) {
+            if(force || !state.lastCalcGrid || state.lastCalcStep!==sz) { calculateGrid(sz); rasterizeGrid(); }
+            if(state.gridCacheCanvas) ctx.drawImage(state.gridCacheCanvas,0,0);
+            renderHighlights(ctx);
+            updateStats(Math.ceil(w/sz), Math.ceil(h/sz), state.colorCounts.size);
+            uiCanvas.style.opacity = (state.replaceMultiHexes.size>0 || state.manualPaintMode) ? 1 : 0;
+            const hint = document.getElementById('previewHint');
+            if(state.replaceMultiHexes.size===0) { hint.classList.add('alert'); hint.innerHTML=state.manualPaintMode?"[ 绘图模式 ]":(state.previewLocked?"[ 预览锁定 ]":"[ 预览中 ]"); }
+        } else {
+            ctx.save(); ctx.translate(w/2,h/2); ctx.scale(state.flipH,state.flipV); ctx.translate(-w/2,-h/2); ctx.drawImage(state.img,0,0); ctx.restore();
+            uiCanvas.style.opacity=1;
+            document.getElementById('previewHint').classList.remove('alert'); document.getElementById('previewHint').innerHTML="按住 [空格] 预览";
+        }
+        renderUI(sz);
+        if((state.replaceMultiHexes.size>0 && state.highlightMode==='blink') || state.highlightMode==='blink-once' || state.previewLocked || state.previewing) requestAnimationFrame(()=>draw(false));
+    }
+
+    function calculateGrid(sz) {
+        state.lastCalcStep=sz; state.lastCalcGrid=[]; state.colorCounts.clear(); state.generatedPalette=[...state.keyColors];
+        const ox=state.guides.v[0], oy=state.guides.h[0], w=state.img.width, h=state.img.height;
+        const sc=Math.floor(-ox/sz), ec=Math.ceil((w-ox)/sz), sr=Math.floor(-oy/sz), er=Math.ceil((h-oy)/sz);
+        const algo=document.getElementById('algoType').value, force=document.getElementById('globalKeyForce').checked;
+        const getCoord=(sx,sy)=>{ let cx=sx-w/2, cy=sy-h/2; cx/=state.flipH; cy/=state.flipV; return {x:cx+w/2,y:cy+h/2}; };
+
+        // 辅助：检查并添加颜色到结果色板列表
+        const ensureInPalette = (c) => {
+             const distLimit = 1; // 近似相等
+             let exists = false;
+             for(let p of state.generatedPalette) { if(getDist(p, c) < distLimit) { exists=true; break; } }
+             if(!exists) state.generatedPalette.push(c);
+        };
+
+        for(let r=sr; r<=er; r++) {
+            for(let c=sc; c<=ec; c++) {
+                const x=ox+c*sz, y=oy+r*sz; if(x+sz<=0||x>=w||y+sz<=0||y>=h) continue;
+                const k=`${c},${r}`; let col;
+                if(state.manualGridColors.has(k)) {
+                    col=state.manualGridColors.get(k);
+                    // 关键修正：手绘颜色也需要计入色板列表
+                    ensureInPalette(col);
+                }
+                else {
+                    const center=getCoord(Math.floor(x+sz/2), Math.floor(y+sz/2));
+                    const tx=Math.floor(center.x), ty=Math.floor(center.y);
+                    if(tx<0||tx>=w||ty<0||ty>=h) continue;
+                    const idx=(ty*w+tx)*4, raw={r:state.sourceData[idx],g:state.sourceData[idx+1],b:state.sourceData[idx+2],a:state.sourceData[idx+3]};
+                    if(raw.a<10) continue;
+                    
+                    let bestK=-1, bestD=9999;
+                    for(let i=0;i<state.keyColors.length;i++) { const d=getDist(raw,state.keyColors[i]); if(d<bestD){bestD=d;bestK=i;} }
+                    
+                    let chosen=-1;
+                    if(bestK!==-1 && ( (force && bestD<state.keyColorTolerance*1.5) || bestD<state.keyColorTolerance )) chosen=bestK;
+                    else {
+                        let bI=-1, bD=999999;
+                        for(let i=0;i<state.generatedPalette.length;i++){const d=getDist(raw,state.generatedPalette[i]);if(d<bD){bD=d;bI=i;}}
+                        if(bI!==-1 && bD<state.tolerance) chosen=bI;
+                        else { chosen=state.generatedPalette.length; state.generatedPalette.push(raw); }
+                    }
+                    col=state.generatedPalette[chosen];
+                    const rK=`${col.r},${col.g},${col.b},${col.a}`; if(state.replacements.has(rK)) col=state.replacements.get(rK);
+                }
+                const hex=rgbToHex(col.r,col.g,col.b); state.colorCounts.set(hex,(state.colorCounts.get(hex)||0)+1);
+                state.lastCalcGrid.push({ x:Math.round(x), y:Math.round(y), w:Math.round(x+sz)-Math.round(x), h:Math.round(y+sz)-Math.round(y), c:col });
+            }
+        }
+        updatePaletteUI();
+    }
+    
+    function rasterizeGrid() {
+        if(!state.lastCalcGrid) return;
+        state.gridCacheCanvas=document.createElement('canvas'); state.gridCacheCanvas.width=canvas.width; state.gridCacheCanvas.height=canvas.height;
+        const x=state.gridCacheCanvas.getContext('2d');
+        for(const c of state.lastCalcGrid) { x.fillStyle=`rgba(${c.c.r},${c.c.g},${c.c.b},${c.c.a/255})`; x.fillRect(c.x,c.y,c.w,c.h); }
+    }
+
+    function renderHighlights(ctx) {
+        if(!state.lastCalcGrid || state.replaceMultiHexes.size===0) return;
+        
+        const time = Date.now();
+        // 持续闪烁 (替换颜色模式)
+        const blinkContinuous = (time % 500) < 250;
+        
+        // 闪烁颜色交替：品红 / 白
+        const blinkColor = blinkContinuous ? "#FF00FF" : "#FFFFFF";
+        
+        for(const cell of state.lastCalcGrid) {
+            const hex=rgbToHex(cell.c.r,cell.c.g,cell.c.b);
+            if(state.replaceMultiHexes.has(hex)) {
+                if(state.highlightMode === 'blink') {
+                     ctx.fillStyle = blinkColor;
+                } else if(state.highlightMode === 'blink-once') {
+                     const phase = (Math.floor(time / 250) % 2 === 0);
+                     ctx.fillStyle = phase ? "#FF00FF" : "#FFFFFF"; 
+                } else {
+                     // solid (green)
+                     ctx.fillStyle = "#00FF00"; 
+                }
+                ctx.fillRect(cell.x, cell.y, cell.w, cell.h);
+            }
+        }
+    }
+
+    function renderUI(sz) {
+        uiCanvas.width=uiCanvas.clientWidth; uiCanvas.height=uiCanvas.clientHeight; uiCtx.clearRect(0,0,uiCanvas.width,uiCanvas.height);
+        const toS=(p,a)=>(a==='v'?state.panX+p*state.zoom:state.panY+p*state.zoom);
+        const v=state.guides.v, h=state.guides.h;
+        // 网格功能已移除，不再绘制网格线和坐标
+
+        // Guides
+        if(!state.pickerMode && !state.manualPaintMode) {
+            const locked=document.getElementById('lockGuides').checked;
+            const style=locked ? (document.body.getAttribute('data-theme')==='dark'?"rgba(255,255,255,0.2)":"rgba(0,0,0,0.2)") : null;
+            ['v','h'].forEach(a=>{
+                state.guides[a].forEach((p,i)=>{
+                    if(locked) uiCtx.strokeStyle=style;
+                    else uiCtx.strokeStyle=(i===0)?'#ff3333':'#00cccc';
+                    uiCtx.lineWidth=2; uiCtx.beginPath();
+                    if(a==='v'){uiCtx.moveTo(toS(p,'v'),0);uiCtx.lineTo(toS(p,'v'),uiCanvas.height);}
+                    else{uiCtx.moveTo(0,toS(p,'h'));uiCtx.lineTo(uiCanvas.width,toS(p,'h'));}
+                    uiCtx.stroke();
+                });
+            });
+        }
+
+        // Dragging Rect
+        if(state.dragging && ['rect_paint'].includes(state.dragging.type)) {
+            const {currC,currR,startC,startR}=state.dragging;
+            const minC=Math.min(startC,currC), maxC=Math.max(startC,currC), minR=Math.min(startR,currR), maxR=Math.max(startR,currR);
+            const bx=toS(v[0]+minC*sz,'v'), by=toS(h[0]+minR*sz,'h'), bw=(maxC-minC+1)*sz*state.zoom, bh=(maxR-minR+1)*sz*state.zoom;
+            uiCtx.fillStyle="rgba(0,0,0,0.3)"; uiCtx.strokeStyle="#000";
+            uiCtx.fillRect(bx,by,bw,bh); uiCtx.strokeRect(bx,by,bw,bh);
+        }
+    }
+
+    // --- Interaction & Tools ---
+    function togglePaintMode() {
+        if(!state.loaded) return;
+        state.manualPaintMode=!state.manualPaintMode;
+        if(state.manualPaintMode) { 
+            state.previewLocked=true; disableOtherModes('paint'); document.body.classList.add('paint-mode'); 
+            // 确保进入绘图模式时，如果之前是吸管，先关掉吸管
+            state.manualPickMode = false;
+        } else { 
+            state.previewLocked=false; document.body.classList.remove('paint-mode'); 
+        }
+        updateBtnStates(); draw(true);
+    }
+    
+    function togglePicker() { 
+        if(!state.loaded) return; 
+        state.pickerMode=!state.pickerMode; 
+        if(state.pickerMode) disableOtherModes('picker'); 
+        updateBtnStates(); 
+    }
+    
+    function toggleTempPicker() { 
+        if(!state.loaded) return; 
+        state.tempPickerMode=!state.tempPickerMode; 
+        if(state.tempPickerMode) disableOtherModes('temp'); 
+        updateBtnStates(); 
+    }
+    
+    function toggleManualPicker() { 
+        // 自动开启绘图模式
+        if (!state.manualPaintMode) {
+            togglePaintMode();
+        }
+        state.manualPickMode=!state.manualPickMode; 
+        updateBtnStates(); 
+    }
+    
+    function disableOtherModes(k) { 
+        if(k!=='picker') state.pickerMode=false; 
+        if(k!=='temp') state.tempPickerMode=false; 
+        if(k!=='paint' && state.manualPaintMode) togglePaintMode(); 
+    }
+    
+    function updateBtnStates() {
+        const setBtn = (id, active, txt, altTxt) => { 
+            const b=document.getElementById(id); 
+            if(active){ b.classList.add('pulse-active'); b.innerHTML=altTxt; }
+            else{ b.classList.remove('pulse-active'); b.innerHTML=txt; } 
+        };
+
+        setBtn('pickBtn', state.pickerMode, `<svg class="icon"><use xlink:href="#icon-picker"></use></svg> 取色`, `取色中...`);
+        setBtn('tempPickBtn', state.tempPickerMode, `<svg class="icon"><use xlink:href="#icon-picker"></use></svg> 取色`, `取色中...`);
+        
+        const paintBtn = document.getElementById('paintModeBtn');
+        paintBtn.className = state.manualPaintMode ? 'active-mode pulse-active' : '';
+        paintBtn.innerHTML = state.manualPaintMode ? `<svg class="icon"><use xlink:href="#icon-paint"></use></svg> 绘图中...` : `<svg class="icon"><use xlink:href="#icon-paint"></use></svg> 绘图`;
+        
+        document.getElementById('manualPickBtn').classList.toggle('active-mode', state.manualPickMode);
+
+        if (state.dragging && state.dragging.type === 'pan') {
+            vp.style.cursor = 'grabbing';
+        } else if (state.replacePickerMode) {
+            vp.style.cursor = 'crosshair';
+        } else if (state.manualPaintMode) {
+            if (state.manualPickMode) vp.style.cursor = 'crosshair';
+            else vp.style.cursor = 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'%23000000\' stroke=\'%23ffffff\' stroke-width=\'2\'><path d=\'M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z\'/></svg>") 0 24, auto';
+        } else if (state.pickerMode || state.tempPickerMode) {
+            vp.style.cursor = 'crosshair';
+        } else {
+            vp.style.cursor = 'default';
+        }
+    }
+
+    // --- Mouse Events ---
+    vp.onmousedown = e => {
+        if(!state.loaded) return; 
+        const r = vp.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+        const {c, r:gr} = getGridPos(mx, my);
+
+        // 1. Pan
+        if (e.ctrlKey) { 
+            state.dragging = { type: 'pan', x0: e.clientX, y0: e.clientY }; 
+            vp.style.cursor = 'grabbing'; 
+            return; 
+        }
+        
+        const handlePick = (cb, type) => {
+            // 根据复选框决定从原图取色还是从预览取色
+            let usePreview = false;
+            if(type === 'key') usePreview = document.getElementById('keyPickSrc').checked;
+            if(type === 'temp') usePreview = document.getElementById('tempPickSrc').checked;
+            
+            // 替换模式吸管默认为预览
+            if(state.replacePickerMode) usePreview = true;
+
+            const col = pickColorAt(mx, my, usePreview); 
+            if(col) cb(col); 
+        };
+
+        // 2. Pickers
+        if (state.replacePickerMode) {
+            return handlePick(c => {
+                const h = rgbToHex(c.r, c.g, c.b);
+                syncHex(h); syncColor(h);
+                toggleReplacePicker();
+            }, 'replace');
+        }
+        // Manual Paint Picker (修复：优先吸取手绘层，吸取后切回画笔)
+        if (state.manualPaintMode && state.manualPickMode) {
+            const key = `${c},${gr}`;
+            if(state.manualGridColors.has(key)) {
+                // 如果当前格有手绘颜色，直接吸取
+                const mc = state.manualGridColors.get(key);
+                syncToManual(rgbToHex(mc.r, mc.g, mc.b));
+            } else {
+                // 否则吸取底层（默认预览）
+                const col = pickColorAt(mx, my, true); 
+                if(col) syncToManual(rgbToHex(col.r, col.g, col.b));
+            }
+            // 自动关闭吸管，切回画笔
+            state.manualPickMode = false;
+            updateBtnStates();
+            return;
+        }
+
+        if (state.pickerMode) return handlePick(addKeyColor, 'key');
+        if (state.tempPickerMode) return handlePick(addTempColor, 'temp');
+
+        // 3. Paint Tools
+        if (state.manualPaintMode) {
+            const key = `${c},${gr}`;
+            if (e.button === 2) { 
+                state.dragging = { type: 'erase_manual' }; 
+                if (state.manualGridColors.delete(key)) { markDirty(); draw(true); }
+            } 
+            else {
+                const rgb = hexToRgb(document.getElementById('manualPaintHex').value); 
+                if(rgb) {
+                    rgb.a = 255;
+                    if (e.shiftKey) {
+                        state.dragging = { type: 'rect_paint', startC: c, startR: gr, currC: c, currR: gr, color: rgb };
+                    } else { 
+                        state.dragging = { type: 'paint_manual', color: rgb }; 
+                        state.manualGridColors.set(key, rgb); 
+                        markDirty(); 
+                        draw(true); 
+                    }
+                }
+            }
+            renderUI(getStep()); 
+            return;
+        }
+
+        // 4. Guides
+        if (!document.getElementById('lockGuides').checked) {
+            for (let a of ['v', 'h']) {
+                for (let i = 0; i < state.guides[a].length; i++) {
+                    const pos = (a === 'v' ? state.panX : state.panY) + state.guides[a][i] * state.zoom;
+                    if (Math.abs((a === 'v' ? mx : my) - pos) < 10) { 
+                        state.dragging = { type: 'guide', axis: a, id: i }; 
+                        return; 
+                    }
+                }
+            }
+        }
+
+        state.dragging = { type: 'pan', x0: e.clientX, y0: e.clientY }; 
+        vp.style.cursor = 'grabbing';
+    };
+    
+    window.onmousemove = e => {
+        if (!state.dragging) return;
+
+        if (state.dragging.type === 'pan') { 
+            state.panX += e.clientX - state.dragging.x0; 
+            state.panY += e.clientY - state.dragging.y0; 
+            state.dragging.x0 = e.clientX; 
+            state.dragging.y0 = e.clientY; 
+            updateView(); 
+        }
+        else if (state.dragging.type === 'guide') { 
+            const r = vp.getBoundingClientRect();
+            const raw = (state.dragging.axis === 'v' ? (e.clientX - r.left - state.panX) : (e.clientY - r.top - state.panY)) / state.zoom; 
+            state.guides[state.dragging.axis][state.dragging.id] = raw; 
+            
+            if (state.dragging.id === 1) { 
+                const step = Math.abs(state.guides[state.dragging.axis][1] - state.guides[state.dragging.axis][0]);
+                document.getElementById('stepInput').value = step.toFixed(2);
+                const other = state.dragging.axis === 'v' ? 'h' : 'v';
+                state.guides[other][1] = state.guides[other][0] + step;
+            }
+            markDirty(); draw(true); 
+        }
+        else {
+             const r = vp.getBoundingClientRect();
+             const {c, r: gr} = getGridPos(e.clientX - r.left, e.clientY - r.top);
+             
+             if (state.dragging.type === 'paint_manual') { 
+                 state.manualGridColors.set(`${c},${gr}`, state.dragging.color); 
+                 draw(true); 
+             }
+             else if (state.dragging.type === 'erase_manual') { 
+                 state.manualGridColors.delete(`${c},${gr}`); 
+                 draw(true); 
+             }
+             else if (state.dragging.type === 'rect_paint') {
+                 if (state.dragging.currC !== c || state.dragging.currR !== gr) { 
+                     state.dragging.currC = c; 
+                     state.dragging.currR = gr; 
+                     renderUI(getStep()); 
+                 }
+             }
+        }
+    };
+
+    window.onmouseup = () => {
+        if (state.dragging && ['rect_paint', 'paint_manual', 'erase_manual'].includes(state.dragging.type)) {
+             if (state.dragging.type === 'rect_paint') {
+                 pushHistory();
+                 const {startC, startR, currC, currR} = state.dragging;
+                 const minC = Math.min(startC, currC), maxC = Math.max(startC, currC);
+                 const minR = Math.min(startR, currR), maxR = Math.max(startR, currR);
+                 
+                 for (let c = minC; c <= maxC; c++) {
+                     for (let r = minR; r <= maxR; r++) {
+                         state.manualGridColors.set(`${c},${r}`, state.dragging.color);
+                     }
+                 }
+                 markDirty();
+             } else {
+                 pushHistory();
+             }
+             draw(true);
+        }
+        state.dragging = null; 
+        updateBtnStates();
+    };
+
+    vp.onwheel = e => { 
+        e.preventDefault(); 
+        const r = vp.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+        const lx = (mx - state.panX) / state.zoom, ly = (my - state.panY) / state.zoom;
+        state.zoom *= (e.deltaY > 0 ? 0.9 : 1.1); 
+        state.panX = mx - lx * state.zoom; 
+        state.panY = my - ly * state.zoom; 
+        updateView(); 
+    };
+
+    // --- Palette UI ---
+    function updatePaletteUI() {
+        const listDiv = document.getElementById('currentPaletteList'); 
+        const gridDiv = document.getElementById('paletteGrid');
+        listDiv.innerHTML = ''; 
+        gridDiv.innerHTML = '';
+        
+        const grp = new Map();
+        state.generatedPalette.forEach(c => {
+             const rk = `${c.r},${c.g},${c.b},${c.a}`; 
+             const fin = state.replacements.get(rk) || c; 
+             const hex = rgbToHex(fin.r, fin.g, fin.b);
+             if(!grp.has(hex)) grp.set(hex, fin);
+        });
+        
+        let sList = Array.from(grp.keys());
+        if(sortSettings.mode === 'count') sList.sort((a,b) => (state.colorCounts.get(b)||0) - (state.colorCounts.get(a)||0));
+        else sList.sort((a,b) => { const ca = hexToRgb(a), cb = hexToRgb(b); return rgbToHsl(ca).h - rgbToHsl(cb).h; });
+        state.lastSortedPalette = sList.map(h => grp.get(h));
+
+        // 生成两个视图
+        sList.forEach(hex => {
+            const count = state.colorCounts.get(hex) || 0;
+            const remark = state.paletteRemarks.get(hex) || '';
+            const isActive = state.replaceMultiHexes.has(hex);
+            
+            // --- 左键单击：锁定预览并缓慢闪烁一次 ---
+            const handleClick = (e) => {
+                if(e && e.target.closest('.palette-remark-btn')) return;
+                
+                const editor = document.getElementById('colorEditor');
+                if(editor.style.display === 'flex') {
+                    // 如果编辑器打开，则是多选替换
+                    if(state.replaceMultiHexes.has(hex)) {
+                        if(state.replaceMultiHexes.size > 1) state.replaceMultiHexes.delete(hex);
+                    } else {
+                        state.replaceMultiHexes.add(hex);
+                    }
+                    updateReplaceInfo();
+                    updatePaletteUI(); draw(true);
+                } else {
+                    // 普通状态：左键单击锁定预览，并闪烁一次
+                    state.previewLocked = true;
+                    state.replaceMultiHexes.clear(); 
+                    state.replaceMultiHexes.add(hex);
+                    
+                    // 切换到单次闪烁模式
+                    state.highlightMode = 'blink-once'; 
+                    draw(true);
+                    
+                    // 1秒后取消高亮
+                    setTimeout(() => {
+                        if(state.highlightMode === 'blink-once') {
+                             state.replaceMultiHexes.delete(hex);
+                             state.highlightMode = 'solid';
+                             draw(true);
+                        }
+                    }, 1000);
+                }
+            };
+
+            // --- 右键单击：复制 Hex ---
+            const handleRightClick = (e) => {
+                e.preventDefault();
+                navigator.clipboard.writeText(hex);
+                syncToManual(hex);
+                // 反馈动画
+                const el = e.currentTarget;
+                el.classList.add('copy-feedback');
+                setTimeout(() => el.classList.remove('copy-feedback'), 500);
+            };
+
+            // --- 双击：打开替换编辑器并锁定 ---
+            const handleDblClick = () => {
+                state.previewLocked = true;
+                state.replaceMultiHexes.clear(); 
+                state.replaceMultiHexes.add(hex);
+                syncHex(hex); syncColor(hex);
+                
+                // 恢复默认的替换模式高亮（根据单选框）
+                updateHighlightMode(); 
+                
+                document.getElementById('colorEditor').style.display = 'flex';
+                updateReplaceInfo();
+                
+                // 关键修复：立即更新UI以显示选中状态（虚线框）
+                updatePaletteUI(); 
+                draw(true);
+            };
+
+            // --- 1. 列表项 ---
+            const row = document.createElement('div');
+            row.className = 'palette-row';
+            row.setAttribute('data-hex', hex);
+            if(isActive) row.classList.add('active');
+            row.onclick = handleClick;
+            row.oncontextmenu = handleRightClick;
+            row.ondblclick = handleDblClick;
+
+            row.innerHTML = `
+                <div class="palette-swatch" style="background:${hex};"></div>
+                <div class="palette-remark" title="${remark}">${remark}</div>
+                <div style="font-size:14px;color:var(--text-dim);margin-right:4px;">${count}</div>
+                <button class="palette-remark-btn" onclick="openRemarkModal('${hex}')" title="编辑备注" style="border:none;background:transparent;color:var(--text-dim);">
+                    <svg class="icon"><use xlink:href="#icon-txt"></use></svg>
+                </button>
+            `;
+            listDiv.appendChild(row);
+
+            // --- 2. 网格块 ---
+            const block = document.createElement('div');
+            block.className = 'palette-block';
+            block.setAttribute('data-hex', hex);
+            block.style.backgroundColor = hex;
+            block.title = `${hex} (${count})`;
+            if(isActive) block.classList.add('active');
+            block.onclick = handleClick;
+            block.oncontextmenu = handleRightClick;
+            block.ondblclick = handleDblClick;
+            gridDiv.appendChild(block);
+        });
+    }
+
+    function highlightInPalette(hex) {
+        // 全局清除之前的定位高亮（实现互斥且持续，直到下一次点击）
+        document.querySelectorAll('.highlight-locate').forEach(el => el.classList.remove('highlight-locate'));
+
+        // 在结果色板中查找并高亮
+        if(!state.lastSortedPalette.length) return;
+        const normalizedHex = hex.toUpperCase();
+        
+        // 尝试在列表和网格中查找 DOM
+        const listEl = document.querySelector(`.palette-row[data-hex="${normalizedHex}"]`);
+        const gridEl = document.querySelector(`.palette-block[data-hex="${normalizedHex}"]`);
+
+        if(listEl || gridEl) {
+            // 滚动到视图 (使用 center 防止跳动)
+            if(listEl) listEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            else if(gridEl) gridEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            
+            // 添加静态高亮 class (不自动移除)
+            if(listEl) listEl.classList.add('highlight-locate');
+            if(gridEl) gridEl.classList.add('highlight-locate');
+        }
+    }
+
+    function updateReplaceInfo() {
+        const listC = document.getElementById('replaceListContainer');
+        listC.innerHTML = '';
+        state.replaceMultiHexes.forEach(h => {
+            const count = state.colorCounts.get(h) || 0;
+            const div = document.createElement('div');
+            div.className = 'replace-item';
+            div.innerHTML = `
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <div style="width:12px;height:12px;background:${h};border:1px solid #000;"></div>
+                    <span>${h}</span>
+                </div>
+                <span>${count} px</span>
+            `;
+            listC.appendChild(div);
+        });
+    }
+
+    // Remark Modal
+    function openRemarkModal(hex) {
+        state.currentRemarkHex = hex;
+        document.getElementById('remarkHexLabel').innerText = hex;
+        document.getElementById('remarkColorPreview').style.backgroundColor = hex;
+        document.getElementById('remarkInput').value = state.paletteRemarks.get(hex) || '';
+        document.getElementById('remarkModal').classList.add('active');
+        document.getElementById('remarkInput').focus();
+    }
+    function closeRemarkModal() { document.getElementById('remarkModal').classList.remove('active'); }
+    function saveRemark() {
+        if(state.currentRemarkHex) {
+            state.paletteRemarks.set(state.currentRemarkHex, document.getElementById('remarkInput').value);
+            updatePaletteUI();
+        }
+        closeRemarkModal();
+    }
+
+    // Replacement & Color Ops
+    function toggleReplacePicker() { state.replacePickerMode=!state.replacePickerMode; document.getElementById('replacePickBtn').classList.toggle('active-mode', state.replacePickerMode); updateBtnStates(); }
+    function updateHighlightMode() { state.highlightMode = document.querySelector('input[name="hlMode"]:checked').value; draw(true); }
+    function confirmReplace() {
+        if(!state.replaceMultiHexes.size) return; pushHistory();
+        const tgt=hexToRgb(document.getElementById('replaceColorHex').value); tgt.a=255;
+        state.generatedPalette.forEach(rc=>{
+             const rk=`${rc.r},${rc.g},${rc.b},${rc.a}`; const curr=state.replacements.get(rk)||rc; const hex=rgbToHex(curr.r,curr.g,curr.b);
+             if(state.replaceMultiHexes.has(hex)) state.replacements.set(rk, tgt);
+        });
+        cancelReplace(); markDirty(); draw(true);
+    }
+    function cancelReplace() { 
+        state.replaceMultiHexes.clear(); 
+        state.replacePickerMode=false; 
+        document.getElementById('colorEditor').style.display = 'none'; // 隐藏弹窗
+        updateBtnStates();
+        updatePaletteUI(); draw(true); 
+    }
+
+    // Helpers
+    function rgbToHex(r,g,b){return"#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1).toUpperCase()}
+    function hexToRgb(h){const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);return r?{r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)}:null}
+    function rgbToHsl(c){let r=c.r/255,g=c.g/255,b=c.b/255,max=Math.max(r,g,b),min=Math.min(r,g,b),h,s,l=(max+min)/2;if(max===min)h=s=0;else{const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h/=6;}return{h,s,l}}
+    function getDist(c1,c2){return Math.sqrt((c1.r-c2.r)**2+(c1.g-c2.g)**2+(c1.b-c2.b)**2+(c1.a-c2.a)**2)}
+    function getStep(){const v=state.guides.v;return Math.abs(v[1]-v[0]);} // Square grid assumption
+    function getGridPos(mx,my){const lx=(mx-state.panX)/state.zoom,ly=(my-state.panY)/state.zoom,sz=getStep(),c=Math.floor((lx-state.guides.v[0])/sz),r=Math.floor((ly-state.guides.h[0])/sz);return{c,r}}
+    
+    function pickColorAt(mx,my,fromPreview){
+        if(fromPreview) {
+             // 预览取色：逻辑取格
+             if(!state.lastCalcGrid) calculateGrid(getStep());
+             const {c, r} = getGridPos(mx, my);
+             // 查找网格中的颜色 (手动遍历一下lastCalcGrid或者使用map优化，这里简单遍历)
+             // 转换坐标到相对原图
+             const ox=state.guides.v[0], oy=state.guides.h[0], sz=getStep();
+             const px = Math.round(ox + c * sz);
+             const py = Math.round(oy + r * sz);
+             
+             // 查找对应 cell
+             const cell = state.lastCalcGrid.find(cl => Math.abs(cl.x - px) < 1 && Math.abs(cl.y - py) < 1);
+             if(cell) return cell.c;
+             return null;
+        } else {
+             // 原图取色：Canvas读取
+             const c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;const x=c.getContext('2d');x.translate(canvas.width/2,canvas.height/2);x.scale(state.flipH,state.flipV);x.translate(-canvas.width/2,-canvas.height/2);x.drawImage(state.img,0,0);const p=x.getImageData((mx-state.panX)/state.zoom,(my-state.panY)/state.zoom,1,1).data;return(p[3]>0)?{r:p[0],g:p[1],b:p[2],a:p[3]}:null
+        }
+    }
+    
+    function updateStats(c,r,co){document.getElementById('statGridSize').innerText=`${c}x${r}`;document.getElementById('statPixelCount').innerText=c*r;document.getElementById('statColorCount').innerText=co||'-';}
+    
+    function flipImg(a){if(a==='h')state.flipH*=-1;else state.flipV*=-1;draw(true);}
+    function updateParam(k,v){state[k]=parseInt(v);if(k==='tolerance')document.getElementById('tolVal').innerText=v;markDirty();draw(true);}
+    function updateKeyColorParam(v){state.keyColorTolerance=parseInt(v);document.getElementById('kcTolVal').innerText=v;markDirty();draw(true);}
+    function manualStep(v){const s=parseFloat(v);if(s>0){state.guides.v[1]=state.guides.v[0]+s;state.guides.h[1]=state.guides.h[0]+s;markDirty();draw(true);}}
+    function updateView(){wrapper.style.transform=`translate(${Math.round(state.panX)}px,${Math.round(state.panY)}px) scale(${state.zoom})`;draw();}
+    
+    function syncHex(v){document.getElementById('replaceColorHex').value=v.toUpperCase();}
+    function syncColor(v){const h=parseHex(v);if(h)document.getElementById('replaceColorPicker').value=h;}
+    function syncManualFromPicker(v){document.getElementById('manualPaintHex').value=v.toUpperCase();}
+    function syncManualFromHex(v){const h=parseHex(v);if(h)document.getElementById('manualPaintColor').value=h;}
+    function syncToManual(hex){document.getElementById('manualPaintHex').value=hex;document.getElementById('manualPaintColor').value=hex;}
+    function parseHex(v){let c=v.trim().replace(/[^0-9a-fA-F]/g,'');if(c.length===3)c=c.split('').map(x=>x+x).join('');return (c.length===6)?'#'+c.toUpperCase():null}
+    async function pasteToInput(id,cb){try{const t=await navigator.clipboard.readText();if(t){document.getElementById(id).value=t;if(cb)cb(t);}}catch(e){alert("粘贴失败")}}
+
+    // Palettes
+    function addKeyColor(c){
+        const hex = rgbToHex(c.r,c.g,c.b);
+        // 定位并高亮结果色板
+        highlightInPalette(hex);
+        if(!state.keyColors.some(k=>getDist(k,c)<10)){
+            state.keyColors.push(c);renderKeyPalette();markDirty();draw(true);
+            syncToManual(hex);
+        }
+    }
+    function renderKeyPalette(){
+        const d=document.getElementById('keyColorList');d.innerHTML='';
+        state.keyColors.forEach((c,i)=>{
+            const e=document.createElement('div'),h=rgbToHex(c.r,c.g,c.b);
+            e.className='color-item'; e.style.background=h; e.title=h;
+            // 双击删除
+            e.ondblclick=()=>{state.keyColors.splice(i,1);renderKeyPalette();draw(true);};
+            // 单击：定位结果色板
+            e.onclick=()=>{ highlightInPalette(h); syncToManual(h); };
+            // 右键：复制
+            e.oncontextmenu=(ev)=>{
+                ev.preventDefault();
+                navigator.clipboard.writeText(h);
+                e.classList.add('copy-feedback');
+                setTimeout(()=>e.classList.remove('copy-feedback'),200);
+            };
+            d.appendChild(e);
+        });
+    }
+    function clearKeyColors(){state.keyColors=[];renderKeyPalette();markDirty();draw(true);}
+    
+    function addTempColor(c){
+        const hex = rgbToHex(c.r,c.g,c.b);
+        // 定位并高亮结果色板
+        highlightInPalette(hex);
+        if(!state.tempColors.some(t=>getDist(t,c) < state.keyColorTolerance)){
+            state.tempColors.push(c);renderTempPalette();syncToManual(hex);
+        }
+    }
+    function renderTempPalette(){
+        const d=document.getElementById('tempPaletteList');d.innerHTML='';
+        state.tempColors.forEach((c,i)=>{
+            const e=document.createElement('div'),h=rgbToHex(c.r,c.g,c.b);
+            e.className='color-item';e.style.background=h;e.title=h;
+            // 双击删除
+            e.ondblclick=ev=>{ev.preventDefault();state.tempColors.splice(i,1);renderTempPalette();};
+            // 单击：定位
+            e.onclick=()=>{ highlightInPalette(h); syncToManual(h); };
+            // 右键：复制
+            e.oncontextmenu=(ev)=>{
+                ev.preventDefault();
+                navigator.clipboard.writeText(h);
+                e.classList.add('copy-feedback');
+                setTimeout(()=>e.classList.remove('copy-feedback'),200);
+            };
+            d.appendChild(e);
+        });
+    }
+    function clearTempColors(){state.tempColors=[];renderTempPalette();}
+
+    function clearManualPaint() { if(confirm("清空手绘层?")) { pushHistory(); state.manualGridColors.clear(); markDirty(); draw(true); } }
+
+    // Export
+    function exportPalette(t,f) {
+        let cs=[]; if(t==='temp')cs=state.tempColors;else if(t==='key')cs=state.keyColors;else cs=state.lastSortedPalette;
+        if(!cs.length)return alert("空色板");
+        const hs=cs.map(c=>rgbToHex(c.r,c.g,c.b));
+        if(f==='xlsx'){
+            if(typeof XLSX==='undefined')return alert("XLSX Lib Missing");
+            const wb=XLSX.utils.book_new(), data=[["Hex","Count","Preview","Remark"]];
+            hs.forEach(h=>data.push([h, state.colorCounts.get(h)||0, "", state.paletteRemarks.get(h)||""]));
+            const ws=XLSX.utils.aoa_to_sheet(data);
+            hs.forEach((h,i)=>{
+                const r=i+1, cRef=XLSX.utils.encode_cell({c:2,r:r});
+                if(!ws[cRef])ws[cRef]={t:'s',v:''}; ws[cRef].s={fill:{fgColor:{rgb:h.replace('#','')}},border:{top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}}};
+            });
+            ws['!cols']=[{wch:10},{wch:8},{wch:8},{wch:20}]; XLSX.utils.book_append_sheet(wb,ws,"Palette"); XLSX.writeFile(wb,`Palette_${Date.now()}.xlsx`);
+        } else if(f==='txt') {
+            const b=new Blob([hs.join('\n')],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`Pal_${t}.txt`; a.click();
+        } else {
+            const cv=document.createElement('canvas'); cv.width=hs.length*32; cv.height=32; const x=cv.getContext('2d');
+            hs.forEach((h,i)=>{x.fillStyle=h;x.fillRect(i*32,0,32,32);});
+            const a=document.createElement('a'); a.href=cv.toDataURL(); a.download=`Pal_${t}.png`; a.click();
+        }
+    }
+    
+    function exportImage() {
+        if(!state.loaded)return; if(!state.lastCalcGrid)calculateGrid(getStep());
+        
+        // 增加命名提示
+        const defaultName = `Export_${Date.now()}`;
+        const fileName = prompt("请输入导出文件名:", defaultName);
+        if(!fileName) return; // 取消则不导出
+
+        const s=exportSettings.scale, sz=state.lastCalcStep, ox=state.guides.v[0], oy=state.guides.h[0], sc=Math.floor(-ox/sz), sr=Math.floor(-oy/sz);
+        const w=Math.ceil(canvas.width/sz)*s, h=Math.ceil(canvas.height/sz)*s;
+        const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const x=cv.getContext('2d');
+        for(const c of state.lastCalcGrid) {
+            const gx=Math.round((c.x-ox)/sz), gy=Math.round((c.y-oy)/sz);
+            if(exportSettings.mode==='grayscale'){ const l=c.c.r*0.3+c.c.g*0.59+c.c.b*0.11; x.fillStyle=`rgb(${l},${l},${l})`; }
+            else x.fillStyle=`rgba(${c.c.r},${c.c.g},${c.c.b},${c.c.a/255})`;
+            x.fillRect((gx-sc)*s,(gy-sr)*s,s,s);
+        }
+        const a=document.createElement('a'); 
+        a.download=`${fileName}.png`; 
+        a.href=cv.toDataURL(); 
+        a.click();
+    }
+    
+    function handlePaletteImport(inp,t) {
+        const f=inp.files[0]; if(!f)return;
+        const r=new FileReader();
+        if(f.name.endsWith('.txt')) { r.onload=e=>{ e.target.result.split(/[\s,;]+/).forEach(h=>{const c=hexToRgb(h);if(c){c.a=255;if(t==='key')addKeyColor(c);else addTempColor(c);}});inp.value='';}; r.readAsText(f); }
+        else { r.onload=e=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);const d=x.getImageData(0,i.height/2,i.width,1).data;for(let j=0;j<i.width;j++){const k=j*4;if(d[k+3]>128){const cl={r:d[k],g:d[k+1],b:d[k+2],a:255};if(t==='key')addKeyColor(cl);else addTempColor(cl);}}inp.value='';};i.src=e.target.result;}; r.readAsDataURL(f); }
+    }
+
+    // Keys (Double Space Logic Updated)
+    window.onkeydown=e=>{
+        if(e.code==='Space' && !e.repeat && !state.manualPaintMode){
+            e.preventDefault();
+            const n=Date.now();
+            
+            // Double tap check
+            if(n - state.lastSpaceTime < 300) {
+                // Determine action based on current state
+                if(state.previewLocked) {
+                    // Currently locked -> Unlock
+                    state.previewLocked = false;
+                    state.previewing = false;
+                    document.getElementById('previewHint').classList.remove('alert');
+                } else {
+                    // Not locked -> Lock
+                    state.previewLocked = true;
+                }
+                state.lastSpaceTime = 0; // Reset
+            } else {
+                // First tap (or slow tap)
+                if(!state.previewLocked) state.previewing = true;
+                state.lastSpaceTime = n;
+            }
+            draw();
+        }
+    };
+    window.onkeyup=e=>{
+        if(e.code==='Space'){
+            if(!state.previewLocked){
+                state.previewing=false;
+            }
+            draw();
+        }
+    };
+
+</script>
+</body>
+</html>
